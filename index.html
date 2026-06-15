@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Sorasaki - Teste de Instância</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; background: #121212; color: #fff; padding: 50px; }
+        #status { font-size: 1.2em; margin-bottom: 20px; color: #ff9800; }
+        .conexao-container { display: flex; justify-content: center; gap: 40px; margin-top: 20px; flex-wrap: wrap; }
+        .box { background: #1e1e1e; padding: 20px; border-radius: 12px; border: 1px solid #333; min-width: 280px; max-width: 400px; }
+        #qrcode { background: #fff; padding: 15px; display: inline-block; border-radius: 8px; min-height: 200px; min-width: 200px; margin-top: 10px; }
+        img { max-width: 220px; }
+        #pairing-code { font-size: 2em; font-weight: bold; letter-spacing: 5px; color: #00e676; background: #2a2a2a; padding: 15px; border-radius: 8px; border: 2px dashed #00e676; margin-top: 15px; display: inline-block; }
+        input[type="text"] { width: 80%; padding: 10px; margin-top: 10px; border-radius: 6px; border: 1px solid #444; background: #222; color: #fff; text-align: center; font-size: 1em; }
+        button { background: #00e676; color: #121212; border: none; padding: 10px 20px; font-weight: bold; border-radius: 6px; cursor: pointer; margin-top: 10px; font-size: 1em; }
+        button:hover { background: #00c853; }
+    </style>
+</head>
+<body>
+    <h1>Sorasaki System - Conexão</h1>
+    <div id="status">Conectando ao servidor do bot...</div>
+
+    <div class="conexao-container" id="opcoes-conexao">
+        <div class="box">
+            <h3>Opção 1: QR Code</h3>
+            <p>O QR Code será exibido automaticamente se disponível:</p>
+            <div id="qrcode">Aguardando...</div>
+        </div>
+        
+        <div class="box">
+            <h3>Opção 2: Código de Conexão</h3>
+            <p>Insira o número do bot com código do país (ex: 55119XXXXXXXX):</p>
+            <input type="text" id="phone-number" placeholder="55119XXXXXXXX">
+            <br>
+            <button id="btn-gerar">Gerar Código</button>
+            <br>
+            <div id="pairing-code">------</div>
+        </div>
+    </div>
+
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <script>
+        // Substitua pelo IP público ou link da sua VPS (Ex: http://seu-ip-da-vps:3000)
+        // Enquanto testar localmente no PC, use http://localhost:3000
+        const ENDERECO_SERVIDOR = "http://localhost:3000"; 
+        
+        const socket = io(ENDERECO_SERVIDOR);
+        const statusDiv = document.getElementById('status');
+        const qrcodeDiv = document.getElementById('qrcode');
+        const pairingCodeDiv = document.getElementById('pairing-code');
+        const opcoesConexao = document.getElementById('opcoes-conexao');
+        const btnGerar = document.getElementById('btn-gerar');
+        const phoneInput = document.getElementById('phone-number');
+
+        socket.on('connect', () => {
+            statusDiv.innerText = "Conectado ao servidor! Escolha um método abaixo:";
+            statusDiv.style.color = "#ff9800";
+        });
+
+        socket.on('connect_error', () => {
+            statusDiv.innerText = "❌ Erro ao conectar ao servidor do bot. Verifique se ele está rodando.";
+            statusDiv.style.color = "#f44336";
+        });
+
+        socket.on('qrcode', (url) => {
+            qrcodeDiv.innerHTML = `<img src="${url}" alt="QR Code">`;
+        });
+
+        socket.on('code', (code) => {
+            pairingCodeDiv.innerText = code;
+            statusDiv.innerText = "Código gerado! Insira-o no seu WhatsApp.";
+        });
+
+        socket.on('connected', () => {
+            statusDiv.innerText = "🚀 Bot conectado e ativo com sucesso!";
+            statusDiv.style.color = "#4caf50";
+            opcoesConexao.innerHTML = "<div class='box' style='width: 100%; max-width: 100%;'><h2>✅ Instância Conectada Corretamente!</h2></div>";
+        });
+
+        socket.on('disconnected', () => {
+            statusDiv.innerText = "❌ Bot desconectado.";
+            statusDiv.style.color = "#f44336";
+            qrcodeDiv.innerHTML = "Aguardando...";
+            pairingCodeDiv.innerText = "------";
+        });
+
+        // Envia o número digitado para o servidor gerar o código de pareamento
+        btnGerar.addEventListener('click', () => {
+            const numero = phoneInput.value.replace(/[^0-9]/g, "");
+            if (!numero || numero.length < 10) {
+                alert("Por favor, digite um número válido com DDD (ex: 5511999999999)");
+                return;
+            }
+            statusDiv.innerText = "Solicitando código de pareamento para o número..." + numero;
+            pairingCodeDiv.innerText = "GERANDO...";
+            socket.emit('solicitar_codigo_pareamento', numero);
+        });
+    </script>
+</body>
+</html>
