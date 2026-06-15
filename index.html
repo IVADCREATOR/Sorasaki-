@@ -31,7 +31,6 @@
             margin: 0 auto; 
         }
 
-        /* Banner foda no topo do Dashboard com borda integrada */
         .banner-container {
             max-width: 100%;
             margin-bottom: 30px;
@@ -73,7 +72,6 @@
             letter-spacing: 1px;
         }
 
-        /* Grid Principal */
         .grid-dashboard { 
             display: grid; 
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
@@ -150,7 +148,6 @@
             text-shadow: 0 0 10px rgba(255, 0, 127, 0.4);
         }
 
-        /* Barras de Recursos */
         .barra-progresso {
             background: #161622;
             height: 8px;
@@ -168,7 +165,6 @@
             background: linear-gradient(90deg, var(--neon-ciano), var(--neon-verde));
         }
 
-        /* Terminal de Logs */
         .terminal {
             background: #040408;
             border: 1px solid #141424;
@@ -254,6 +250,7 @@
     </div>
 
     <script>
+        // Lembra de mudar essa URL para a da sua API na nuvem quando hospedar!
         const URL_API = "http://localhost:3000/api/stats";
         const terminal = document.getElementById("log-terminal");
 
@@ -276,15 +273,12 @@
             return `${dias}d ${horas}h ${minutos}m ${segundos}s`;
         }
 
-        // Simulação integrada e síncrona de Hardware Base
         function simularHardware() {
             if (document.getElementById("status").innerText.includes("ONLINE")) {
-                // CPU Oscilando entre 12% e 38%
                 const cpuFake = Math.floor(Math.random() * (38 - 12 + 1)) + 12;
                 document.getElementById("cpu-texto").innerText = `${cpuFake}%`;
                 document.getElementById("cpu-barra").style.width = `${cpuFake}%`;
 
-                // RAM Oscilando de forma realista na faixa de 1.2GB até 1.7GB sobre um teto simulado de 4GB
                 const ramFake = (Math.random() * (1.78 - 1.21) + 1.21).toFixed(2);
                 const ramPorcentagem = ((ramFake / 4) * 100).toFixed(0);
                 document.getElementById("ram-texto").innerText = `${ramFake} GB / 4.0 GB`;
