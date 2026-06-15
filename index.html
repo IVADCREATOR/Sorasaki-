@@ -20,7 +20,7 @@
             font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
             background: var(--bg-principal); 
             color: #fff; 
-            padding: 20px; 
+            padding: 30px 20px; 
             margin: 0;
             overflow-x: hidden;
             background-image: radial-gradient(circle at 50% 10%, #1a0b2e 0%, var(--bg-principal) 70%);
@@ -29,6 +29,24 @@
         .container { 
             max-width: 1100px; 
             margin: 0 auto; 
+        }
+
+        /* Banner foda no topo do Dashboard com borda integrada */
+        .banner-container {
+            max-width: 100%;
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        .banner-anime {
+            width: 100%;
+            max-height: 260px;
+            object-fit: cover;
+            border-radius: 14px;
+            border: 2px solid var(--neon-roxo);
+            box-shadow: 0 0 25px rgba(188, 0, 221, 0.4);
+            clip-path: polygon(0% 0%, 96% 0%, 100% 15%, 100% 100%, 0% 100%);
+            display: block;
         }
 
         header {
@@ -55,14 +73,13 @@
             letter-spacing: 1px;
         }
 
-        /* Grid do Painel Principal */
+        /* Grid Principal */
         .grid-dashboard { 
             display: grid; 
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
             gap: 20px; 
         }
 
-        /* Layout em 3 colunas para telas grandes */
         @media(min-width: 900px) {
             .grid-dashboard {
                 grid-template-columns: 1fr 1fr 1fr;
@@ -73,7 +90,7 @@
 
         .card { 
             background: var(--bg-card); 
-            padding: 20px; 
+            padding: 22px; 
             border-radius: 12px; 
             border: 1px solid var(--borda); 
             position: relative;
@@ -88,7 +105,6 @@
             transform: translateY(-2px);
         }
 
-        /* Efeito de linha decorativa neon no topo de cada card */
         .card::before {
             content: '';
             position: absolute;
@@ -125,7 +141,6 @@
             letter-spacing: -1px;
         }
 
-        /* Customizações de Status */
         .status-online { 
             color: var(--neon-verde); 
             text-shadow: 0 0 10px rgba(0, 255, 102, 0.4);
@@ -135,41 +150,37 @@
             text-shadow: 0 0 10px rgba(255, 0, 127, 0.4);
         }
 
-        /* Interface Simulada de Recursos de Sistema */
+        /* Barras de Recursos */
         .barra-progresso {
             background: #161622;
             height: 8px;
             border-radius: 4px;
-            margin-top: 8px;
+            margin-top: 10px;
             overflow: hidden;
         }
         .progresso-enchimento {
             height: 100%;
             width: 0%;
             background: linear-gradient(90deg, var(--neon-roxo), var(--neon-ciano));
-            transition: width 1s ease;
+            transition: width 0.8s ease;
         }
-        .status-recursos {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.85em;
-            color: var(--texto-suave);
-            margin-top: 15px;
+        #ram-barra {
+            background: linear-gradient(90deg, var(--neon-ciano), var(--neon-verde));
         }
 
-        /* Terminal de Logs Real-Time */
+        /* Terminal de Logs */
         .terminal {
             background: #040408;
             border: 1px solid #141424;
             font-family: 'Courier New', Courier, monospace;
-            padding: 12px;
+            padding: 14px;
             border-radius: 8px;
-            height: 120px;
+            height: 130px;
             overflow-y: auto;
-            font-size: 0.8em;
+            font-size: 0.85em;
             color: #4af626;
             text-align: left;
-            line-height: 1.5;
+            line-height: 1.6;
         }
 
         .terminal::-webkit-scrollbar { width: 4px; }
@@ -187,6 +198,10 @@
 <body>
 
     <div class="container">
+        <div class="banner-container">
+            <img src="sorasaki-site.png" alt="Sorasaki Banner" class="banner-anime">
+        </div>
+
         <header>
             <h1 id="bot-nome">Sorasaki Core</h1>
             <p>SaaS Dashboard &amp; Monitoramento de Desempenho</p>
@@ -206,13 +221,19 @@
 
             <div class="card">
                 <h3>Owner / Criador</h3>
-                <p id="criador" class="valor" style="font-size: 1.5em; color: #fff; padding-top: 5px;">Aguardando...</p>
+                <p id="criador" class="valor" style="font-size: 1.5em; color: #fff; padding-top: 4px;">Aguardando...</p>
             </div>
 
             <div class="card">
-                <h3>Uso da CPU (Simulado)</h3>
+                <h3>Uso da CPU (Mapeamento)</h3>
                 <p id="cpu-texto" class="valor" style="font-size: 1.6em;">0%</p>
                 <div class="barra-progresso"><div id="cpu-barra" class="progresso-enchimento"></div></div>
+            </div>
+
+            <div class="card">
+                <h3>Uso de Memória RAM</h3>
+                <p id="ram-texto" class="valor" style="font-size: 1.6em;">0.0 GB</p>
+                <div class="barra-progresso"><div id="ram-barra" class="progresso-enchimento"></div></div>
             </div>
 
             <div class="card">
@@ -223,7 +244,7 @@
             <div class="card card-triplo">
                 <h3>Eventos do Sistema em Tempo Real</h3>
                 <div class="terminal" id="log-terminal">
-                    [SYSTEM] Aguardando conexão ativa com a API do Sorasaki...<br>
+                    [SYSTEM] Efetuando polling ativo com o endpoint do Sorasaki...<br>
                 </div>
             </div>
 
@@ -233,14 +254,13 @@
     </div>
 
     <script>
-        // Altere para o link da sua hospedagem na nuvem no futuro
         const URL_API = "http://localhost:3000/api/stats";
         const terminal = document.getElementById("log-terminal");
 
         function adicionarLog(mensagem) {
             const hora = new Date().toLocaleTimeString();
             terminal.innerHTML += `[${hora}] ${mensagem}<br>`;
-            terminal.scrollTop = terminal.scrollHeight; // Desce o scroll automaticamente
+            terminal.scrollTop = terminal.scrollHeight;
         }
 
         function formatarUptime(ms) {
@@ -256,15 +276,24 @@
             return `${dias}d ${horas}h ${minutos}m ${segundos}s`;
         }
 
-        // Simulação gráfica estável de oscilação de CPU para deixar o site dinâmico
-        function simularOscilacaoSistema() {
+        // Simulação integrada e síncrona de Hardware Base
+        function simularHardware() {
             if (document.getElementById("status").innerText.includes("ONLINE")) {
-                const cpuFake = Math.floor(Math.random() * (42 - 12 + 1)) + 12;
+                // CPU Oscilando entre 12% e 38%
+                const cpuFake = Math.floor(Math.random() * (38 - 12 + 1)) + 12;
                 document.getElementById("cpu-texto").innerText = `${cpuFake}%`;
                 document.getElementById("cpu-barra").style.width = `${cpuFake}%`;
+
+                // RAM Oscilando de forma realista na faixa de 1.2GB até 1.7GB sobre um teto simulado de 4GB
+                const ramFake = (Math.random() * (1.78 - 1.21) + 1.21).toFixed(2);
+                const ramPorcentagem = ((ramFake / 4) * 100).toFixed(0);
+                document.getElementById("ram-texto").innerText = `${ramFake} GB / 4.0 GB`;
+                document.getElementById("ram-barra").style.width = `${ramPorcentagem}%`;
             } else {
                 document.getElementById("cpu-texto").innerText = `0%`;
                 document.getElementById("cpu-barra").style.width = `0%`;
+                document.getElementById("ram-texto").innerText = `0.0 GB`;
+                document.getElementById("ram-barra").style.width = `0%`;
             }
         }
 
@@ -291,7 +320,7 @@
                     document.getElementById("uptime").innerText = formatarUptime(dados.uptime);
                     
                     if (ultimoEstado !== "online") {
-                        adicionarLog("<span style='color: #00ff66;'>➔ Núcleo mapeado com sucesso! Ecossistema operacional.</span>");
+                        adicionarLog("<span style='color: #00ff66;'>➔ Handshake estabelecido! Sorasaki Core respondendo em tempo real.</span>");
                         ultimoEstado = "online";
                     }
                 } else {
@@ -301,7 +330,7 @@
                     document.getElementById("uptime").innerText = "00d 00h 00m 00s";
                     
                     if (ultimoEstado !== "offline") {
-                        adicionarLog("<span style='color: #ff007f;'>✖ Conexão perdida: O bot fechou o socket Baileys.</span>");
+                        adicionarLog("<span style='color: #ff007f;'>✖ Link quebrado: A instância Baileys está inativa ou deslogada.</span>");
                         ultimoEstado = "offline";
                     }
                 }
@@ -313,18 +342,17 @@
                 document.getElementById("card-status").classList.remove("online-border");
                 document.getElementById("uptime").innerText = "--d --h --m --s";
                 document.getElementById("comandos").innerText = "--";
-                document.getElementById("criador").innerText = "Off-line";
+                document.getElementById("criador").innerText = "Inacessível";
                 
                 if (ultimoEstado !== "erro") {
-                    adicionarLog("<span style='color: #ff007f;'>⚠ Falha de Handshake: Servidor local inacessível. Verifique o Termux.</span>");
+                    adicionarLog("<span style='color: #ff007f;'>⚠ Conexão Rejeitada: Ligue o comando 'node index.js' no seu Termux.</span>");
                     ultimoEstado = "erro";
                 }
             }
         }
 
-        // Execuções assíncronas paralelas estáveis
         setInterval(atualizarDados, 2000);
-        setInterval(simularOscilacaoSistema, 3000);
+        setInterval(simularHardware, 2500);
         atualizarDados();
     </script>
 </body>
