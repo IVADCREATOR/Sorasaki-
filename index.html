@@ -250,8 +250,22 @@
     </div>
 
     <script>
-        // Lembra de mudar essa URL para a da sua API na nuvem quando hospedar!
-        const URL_API = "http://localhost:3000/api/stats";
+        // Lógica de Detecção de Endereço Dinâmico para Casamento de Protocolos (HTTP/HTTPS)
+        // Se você rodar local, aponta para localhost. Se rodar no GitHub, ele usa o endereço do host ou aceita configuração.
+        let URL_API = "http://localhost:3000/api/stats";
+        
+        if (window.location.protocol === "https:") {
+            // Ajuste automático: Altere para o seu túnel seguro (ex: Ngrok/Localtunnel) ou IP da rede local caso use bypass misto
+            // Exemplo com Ngrok: URL_API = "https://seu-subdominio.ngrok-free.app/api/stats";
+            URL_API = "http://" + window.location.hostname + ":3000/api/stats";
+            
+            // Fallback amigável caso esteja no repositório público do GitHub Pages
+            if(window.location.hostname.includes("github.io")) {
+                // Modifique a string abaixo com o IP local do seu Wi-Fi se quiser debugar direto do celular na mesma rede
+                URL_API = "http://192.168.15.8:3000/api/stats"; 
+            }
+        }
+
         const terminal = document.getElementById("log-terminal");
 
         function adicionarLog(mensagem) {
@@ -339,7 +353,12 @@
                 document.getElementById("criador").innerText = "Inacessível";
                 
                 if (ultimoEstado !== "erro") {
-                    adicionarLog("<span style='color: #ff007f;'>⚠ Conexão Rejeitada: Ligue o comando 'node index.js' no seu Termux.</span>");
+                    if (window.location.protocol === "https:") {
+                        adicionarLog("<span style='color: #ff9800;'>⚠ Bloqueio de Conteúdo Misto detectado pelo Navegador (HTTPS para HTTP).</span>");
+                        adicionarLog("<span style='color: #8fa0dd;'>Dica: Habilite 'Conteúdo Inseguro' nas permissões do site ou utilize um túnel HTTPS (Ngrok).</span>");
+                    } else {
+                        adicionarLog("<span style='color: #ff007f;'>⚠ Conexão Rejeitada: Ligue o comando 'node index.js' no seu Termux.</span>");
+                    }
                     ultimoEstado = "erro";
                 }
             }
