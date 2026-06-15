@@ -3,57 +3,248 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sorasaki System - Status & Estatísticas</title>
+    <title>Sorasaki System - Cyber Dashboard</title>
     <style>
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: #0a0a0c; color: #fff; padding: 40px; text-align: center; }
-        .container { max-width: 600px; margin: 0 auto; }
-        h1 { color: #00e676; font-size: 2.5em; margin-bottom: 5px; }
-        .sub { color: #888; margin-bottom: 30px; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px; }
-        .card { background: #141419; padding: 20px; border-radius: 12px; border: 1px solid #222; text-align: left; transition: 0.3s ease; }
-        .card h3 { margin: 0 0 10px 0; color: #888; font-size: 0.9em; text-transform: uppercase; letter-spacing: 1px; }
-        .card p { margin: 0; font-size: 1.4em; font-weight: bold; }
-        .status-online { color: #00e676; }
-        .status-offline { color: #f44336; }
-        .dev-tag { margin-top: 40px; font-size: 0.9em; color: #555; }
+        :root {
+            --bg-principal: #06060c;
+            --bg-card: #0d0d16;
+            --borda: #1f1f38;
+            --neon-roxo: #bc00dd;
+            --neon-ciano: #00f3ff;
+            --neon-verde: #00ff66;
+            --neon-rosa: #ff007f;
+            --texto-suave: #8fa0dd;
+        }
+
+        body { 
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+            background: var(--bg-principal); 
+            color: #fff; 
+            padding: 20px; 
+            margin: 0;
+            overflow-x: hidden;
+            background-image: radial-gradient(circle at 50% 10%, #1a0b2e 0%, var(--bg-principal) 70%);
+        }
+
+        .container { 
+            max-width: 1100px; 
+            margin: 0 auto; 
+        }
+
+        header {
+            margin-bottom: 30px;
+            text-align: left;
+            border-left: 4px solid var(--neon-roxo);
+            padding-left: 15px;
+            text-shadow: 0 0 10px rgba(188, 0, 221, 0.3);
+        }
+
+        header h1 { 
+            font-size: 2.5em; 
+            margin: 0 0 5px 0; 
+            letter-spacing: 2px;
+            background: linear-gradient(45deg, #fff, var(--neon-ciano));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        header p { 
+            color: var(--texto-suave); 
+            margin: 0;
+            font-size: 1em;
+            letter-spacing: 1px;
+        }
+
+        /* Grid do Painel Principal */
+        .grid-dashboard { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
+            gap: 20px; 
+        }
+
+        /* Layout em 3 colunas para telas grandes */
+        @media(min-width: 900px) {
+            .grid-dashboard {
+                grid-template-columns: 1fr 1fr 1fr;
+            }
+            .card-duplo { grid-column: span 2; }
+            .card-triplo { grid-column: span 3; }
+        }
+
+        .card { 
+            background: var(--bg-card); 
+            padding: 20px; 
+            border-radius: 12px; 
+            border: 1px solid var(--borda); 
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            border-color: rgba(0, 243, 255, 0.4);
+            box-shadow: 0 0 15px rgba(0, 243, 255, 0.1);
+            transform: translateY(-2px);
+        }
+
+        /* Efeito de linha decorativa neon no topo de cada card */
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 2px;
+            background: linear-gradient(90deg, transparent, var(--neon-roxo), transparent);
+        }
+
+        .card.online-border::before {
+            background: linear-gradient(90deg, transparent, var(--neon-verde), transparent);
+        }
+
+        .card h3 { 
+            margin: 0 0 15px 0; 
+            color: var(--texto-suave); 
+            font-size: 0.85em; 
+            text-transform: uppercase; 
+            letter-spacing: 2px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card h3::before {
+            content: '◆';
+            color: var(--neon-ciano);
+            font-size: 0.9em;
+        }
+
+        .card p.valor { 
+            margin: 0; 
+            font-size: 2em; 
+            font-weight: 800; 
+            font-family: 'Courier New', Courier, monospace;
+            letter-spacing: -1px;
+        }
+
+        /* Customizações de Status */
+        .status-online { 
+            color: var(--neon-verde); 
+            text-shadow: 0 0 10px rgba(0, 255, 102, 0.4);
+        }
+        .status-offline { 
+            color: var(--neon-rosa); 
+            text-shadow: 0 0 10px rgba(255, 0, 127, 0.4);
+        }
+
+        /* Interface Simulada de Recursos de Sistema */
+        .barra-progresso {
+            background: #161622;
+            height: 8px;
+            border-radius: 4px;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+        .progresso-enchimento {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--neon-roxo), var(--neon-ciano));
+            transition: width 1s ease;
+        }
+        .status-recursos {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85em;
+            color: var(--texto-suave);
+            margin-top: 15px;
+        }
+
+        /* Terminal de Logs Real-Time */
+        .terminal {
+            background: #040408;
+            border: 1px solid #141424;
+            font-family: 'Courier New', Courier, monospace;
+            padding: 12px;
+            border-radius: 8px;
+            height: 120px;
+            overflow-y: auto;
+            font-size: 0.8em;
+            color: #4af626;
+            text-align: left;
+            line-height: 1.5;
+        }
+
+        .terminal::-webkit-scrollbar { width: 4px; }
+        .terminal::-webkit-scrollbar-thumb { background: var(--borda); border-radius: 2px; }
+
+        .dev-tag { 
+            margin-top: 40px; 
+            font-size: 0.85em; 
+            color: #444466; 
+            letter-spacing: 1px;
+        }
+        .dev-tag span { color: var(--neon-roxo); font-weight: bold; }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h1 id="bot-nome">Sorasaki System</h1>
-        <p class="sub">Painel Oficial de Monitoramento e Performance</p>
+        <header>
+            <h1 id="bot-nome">Sorasaki Core</h1>
+            <p>SaaS Dashboard &amp; Monitoramento de Desempenho</p>
+        </header>
 
-        <div class="grid">
-            <div class="card">
-                <h3>Status do Sistema</h3>
-                <p id="status" class="status-offline">Buscando...</p>
+        <div class="grid-dashboard">
+            
+            <div class="card" id="card-status">
+                <h3>Status da Instância</h3>
+                <p id="status" class="valor status-offline">BUSCANDO...</p>
             </div>
-            <div class="card">
-                <h3>Tempo Ativo (Uptime)</h3>
-                <p id="uptime">--h --m --s</p>
+
+            <div class="card card-duplo">
+                <h3>Duração Ativa (Uptime)</h3>
+                <p id="uptime" class="valor" style="color: var(--neon-ciano); text-shadow: 0 0 10px rgba(0,243,255,0.2);">--d --h --m --s</p>
             </div>
+
             <div class="card">
-                <h3>Criador / Desenvolvedor</h3>
-                <p id="criador">Buscando...</p>
+                <h3>Owner / Criador</h3>
+                <p id="criador" class="valor" style="font-size: 1.5em; color: #fff; padding-top: 5px;">Aguardando...</p>
             </div>
+
             <div class="card">
-                <h3>Comandos Prontos</h3>
-                <p id="comandos">--</p>
+                <h3>Uso da CPU (Simulado)</h3>
+                <p id="cpu-texto" class="valor" style="font-size: 1.6em;">0%</p>
+                <div class="barra-progresso"><div id="cpu-barra" class="progresso-enchimento"></div></div>
             </div>
+
+            <div class="card">
+                <h3>Módulos &amp; Comandos</h3>
+                <p id="comandos" class="valor" style="color: #ffff00; text-shadow: 0 0 10px rgba(255,255,0,0.2);">--</p>
+            </div>
+
+            <div class="card card-triplo">
+                <h3>Eventos do Sistema em Tempo Real</h3>
+                <div class="terminal" id="log-terminal">
+                    [SYSTEM] Aguardando conexão ativa com a API do Sorasaki...<br>
+                </div>
+            </div>
+
         </div>
 
-        <p class="dev-tag">Sorasaki System v<span id="versao">0.0</span> • Hospedagem Nuvem Ativa</p>
+        <p class="dev-tag">Sorasaki System v<span id="versao">0.0</span> • Build Enterprise • Desenvolvido por <span>NOJX IVAD ⁷⁷⁷</span></p>
     </div>
 
     <script>
-        // Quando você hospedar seu bot na nuvem (Render, Railway, VPS), mude para a URL pública gerada
-        // Enquanto testa no Termux/PC com o bot ligado, use http://localhost:3000/api/stats
+        // Altere para o link da sua hospedagem na nuvem no futuro
         const URL_API = "http://localhost:3000/api/stats";
+        const terminal = document.getElementById("log-terminal");
+
+        function adicionarLog(mensagem) {
+            const hora = new Date().toLocaleTimeString();
+            terminal.innerHTML += `[${hora}] ${mensagem}<br>`;
+            terminal.scrollTop = terminal.scrollHeight; // Desce o scroll automaticamente
+        }
 
         function formatarUptime(ms) {
             if (isNaN(ms) || ms <= 0) return "00d 00h 00m 00s";
-            
             let segundos = Math.floor(ms / 1000);
             let minutos = Math.floor(segundos / 60);
             segundos %= 60;
@@ -65,46 +256,75 @@
             return `${dias}d ${horas}h ${minutos}m ${segundos}s`;
         }
 
-        async function atualizarDados() {
-            try {
-                const resposta = await fetch(URL_API);
-                if (!resposta.ok) throw new Error("Erro de resposta do servidor");
-                
-                const dados = await resposta.json();
-
-                document.getElementById("bot-nome").innerText = dados.nomeBot || "Sorasaki System";
-                document.getElementById("versao").innerText = dados.versao || "4.00";
-                document.getElementById("criador").innerText = dados.criador || "NOJX IVAD ⁷⁷⁷";
-                document.getElementById("comandos").innerText = dados.comandosCarregados !== undefined ? dados.comandosCarregados : "0";
-                
-                const statusEl = document.getElementById("status");
-                if (dados.status === "online") {
-                    statusEl.innerText = "● ONLINE";
-                    statusEl.className = "status-online";
-                } else {
-                    statusEl.innerText = "○ OFFLINE";
-                    statusEl.className = "status-offline";
-                    document.getElementById("uptime").innerText = "00d 00h 00m 00s";
-                }
-
-                if (dados.status === "online") {
-                    document.getElementById("uptime").innerText = formatarUptime(dados.uptime);
-                }
-
-            } catch (erro) {
-                // Caso o servidor caia ou não responda, define o layout de offline com segurança
-                const statusEl = document.getElementById("status");
-                statusEl.innerText = "○ OFFLINE";
-                statusEl.className = "status-offline";
-                document.getElementById("uptime").innerText = "--h --m --s";
-                document.getElementById("comandos").innerText = "--";
+        // Simulação gráfica estável de oscilação de CPU para deixar o site dinâmico
+        function simularOscilacaoSistema() {
+            if (document.getElementById("status").innerText.includes("ONLINE")) {
+                const cpuFake = Math.floor(Math.random() * (42 - 12 + 1)) + 12;
+                document.getElementById("cpu-texto").innerText = `${cpuFake}%`;
+                document.getElementById("cpu-barra").style.width = `${cpuFake}%`;
+            } else {
+                document.getElementById("cpu-texto").innerText = `0%`;
+                document.getElementById("cpu-barra").style.width = `0%`;
             }
         }
 
-        // Faz requisições suaves a cada 2 segundos para atualizar o Uptime sem travar o navegador
+        let ultimoEstado = "offline";
+
+        async function atualizarDados() {
+            try {
+                const resposta = await fetch(URL_API);
+                if (!resposta.ok) throw new Error();
+                const dados = await resposta.json();
+
+                document.getElementById("bot-nome").innerText = dados.nomeBot || "Sorasaki Core";
+                document.getElementById("versao").innerText = dados.versao || "4.00";
+                document.getElementById("criador").innerText = dados.criador || "IVAD ⁷⁷⁷";
+                document.getElementById("comandos").innerText = dados.comandosCarregados ?? "0";
+                
+                const statusEl = document.getElementById("status");
+                const cardStatus = document.getElementById("card-status");
+                
+                if (dados.status === "online") {
+                    statusEl.innerText = "ONLINE";
+                    statusEl.className = "valor status-online";
+                    cardStatus.classList.add("online-border");
+                    document.getElementById("uptime").innerText = formatarUptime(dados.uptime);
+                    
+                    if (ultimoEstado !== "online") {
+                        adicionarLog("<span style='color: #00ff66;'>➔ Núcleo mapeado com sucesso! Ecossistema operacional.</span>");
+                        ultimoEstado = "online";
+                    }
+                } else {
+                    statusEl.innerText = "OFFLINE";
+                    statusEl.className = "valor status-offline";
+                    cardStatus.classList.remove("online-border");
+                    document.getElementById("uptime").innerText = "00d 00h 00m 00s";
+                    
+                    if (ultimoEstado !== "offline") {
+                        adicionarLog("<span style='color: #ff007f;'>✖ Conexão perdida: O bot fechou o socket Baileys.</span>");
+                        ultimoEstado = "offline";
+                    }
+                }
+
+            } catch (erro) {
+                const statusEl = document.getElementById("status");
+                statusEl.innerText = "DISCONNECTED";
+                statusEl.className = "valor status-offline";
+                document.getElementById("card-status").classList.remove("online-border");
+                document.getElementById("uptime").innerText = "--d --h --m --s";
+                document.getElementById("comandos").innerText = "--";
+                document.getElementById("criador").innerText = "Off-line";
+                
+                if (ultimoEstado !== "erro") {
+                    adicionarLog("<span style='color: #ff007f;'>⚠ Falha de Handshake: Servidor local inacessível. Verifique o Termux.</span>");
+                    ultimoEstado = "erro";
+                }
+            }
+        }
+
+        // Execuções assíncronas paralelas estáveis
         setInterval(atualizarDados, 2000);
-        
-        // Primeira execução imediata ao carregar a página
+        setInterval(simularOscilacaoSistema, 3000);
         atualizarDados();
     </script>
 </body>
