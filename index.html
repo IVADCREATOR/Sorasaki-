@@ -240,7 +240,7 @@
             <div class="card card-triplo">
                 <h3>Eventos do Sistema em Tempo Real</h3>
                 <div class="terminal" id="log-terminal">
-                    [SYSTEM] Efetuando polling seguro com o túnel estável do Ngrok...<br>
+                    [SYSTEM] Aguardando conexão com o servidor via WebSocket...<br>
                 </div>
             </div>
 
@@ -249,11 +249,29 @@
         <p class="dev-tag">Sorasaki System v<span id="versao">0.0</span> • Build Enterprise • Desenvolvido por <span>NOJX IVAD ⁷⁷⁷</span></p>
     </div>
 
+    <script src="/socket.io/socket.io.js"></script>
     <script>
-        // Endpoint seguro e estático roteado via túnel TLS/HTTPS do Ngrok
-        const URL_API = "https://outmatch-dude-durably.ngrok-free.app/api/stats";
+        /**
+         * Este dashboard não faz mais polling REST contra uma URL fixa de ngrok.
+         * Em vez disso, ele se conecta por socket.io na MESMA origem que serviu esta
+         * página e espera receber um evento 'stats' do servidor, periodicamente, com:
+         * {
+         *   status: 'online' | 'offline',   -> instância Baileys conectada ao WhatsApp?
+         *   uptime: number,                 -> ms desde que a sessão WhatsApp conectou
+         *   nomeBot: string,
+         *   versao: string,
+         *   criador: string,
+         *   comandosCarregados: number,
+         *   cpu: number,                    -> 0 a 100
+         *   ramUsadaGB: number,
+         *   ramTotalGB: number
+         * }
+         * Veja o snippet de servidor sugerido para emitir esse evento.
+         */
 
         const terminal = document.getElementById("log-terminal");
+        const statusEl = document.getElementById("status");
+        const cardStatus = document.getElementById("card-status");
 
         function adicionarLog(mensagem) {
             const hora = new Date().toLocaleTimeString();
@@ -270,85 +288,104 @@
             minutos %= 60;
             let dias = Math.floor(horas / 24);
             horas %= 24;
-
             return `${dias}d ${horas}h ${minutos}m ${segundos}s`;
         }
 
-        function simularHardware() {
-            if (document.getElementById("status").innerText.includes("ONLINE")) {
-                const cpuFake = Math.floor(Math.random() * (38 - 12 + 1)) + 12;
-                document.getElementById("cpu-texto").innerText = `${cpuFake}%`;
-                document.getElementById("cpu-barra").style.width = `${cpuFake}%`;
+        function definirOffline() {
+            statusEl.innerText = "OFFLINE";
+            statusEl.className = "valor status-offline";
+            cardStatus.classList.remove("online-border");
+            document.getElementById("uptime").innerText = "00d 00h 00m 00s";
+            document.getElementById("cpu-texto").innerText = "0%";
+            document.getElementById("cpu-barra").style.width = "0%";
+            document.getElementById("ram-texto").innerText = "0.0 GB";
+            document.getElementById("ram-barra").style.width = "0%";
+        }
 
-                const ramFake = (Math.random() * (1.78 - 1.21) + 1.21).toFixed(2);
-                const ramPorcentagem = ((ramFake / 4) * 100).toFixed(0);
-                document.getElementById("ram-texto").innerText = `${ramFake} GB / 4.0 GB`;
+        function definirSemServidor() {
+            statusEl.innerText = "SEM CONEXÃO";
+            statusEl.className = "valor status-offline";
+            cardStatus.classList.remove("online-border");
+            document.getElementById("uptime").innerText = "--d --h --m --s";
+            document.getElementById("comandos").innerText = "--";
+            document.getElementById("criador").innerText = "Inacessível";
+            document.getElementById("cpu-texto").innerText = "--%";
+            document.getElementById("cpu-barra").style.width = "0%";
+            document.getElementById("ram-texto").innerText = "-- GB";
+            document.getElementById("ram-barra").style.width = "0%";
+        }
+
+        // Conecta sempre na mesma origem que serviu esta página — elimina a URL
+        // fixa do ngrok que ficava desatualizada a cada reinício do túnel.
+        const socket = io(window.location.origin, {
+            transports: ['websocket', 'polling'],
+            reconnection: true,
+            reconnectionAttempts: Infinity,
+            reconnectionDelay: 1000,
+            reconnectionDelayMax: 5000,
+            timeout: 20000
+        });
+
+        let estadoAnterior = "inicial";
+
+        socket.on('connect', () => {
+            adicionarLog("<span style='color: #00ff66;'>➔ Conectado ao servidor. Aguardando dados da instância...</span>");
+        });
+
+        socket.on('disconnect', () => {
+            definirSemServidor();
+            if (estadoAnterior !== "sem-servidor") {
+                adicionarLog("<span style='color: #ff007f;'>✖ Conexão com o servidor perdida. Verifique se o Node/Termux está ligado. Tentando reconectar...</span>");
+                estadoAnterior = "sem-servidor";
+            }
+        });
+
+        socket.on('connect_error', () => {
+            definirSemServidor();
+            if (estadoAnterior !== "sem-servidor") {
+                adicionarLog("<span style='color: #ff007f;'>⚠ Não foi possível conectar ao servidor. Verifique a página de bypass do Ngrok ou se o servidor está ligado.</span>");
+                estadoAnterior = "sem-servidor";
+            }
+        });
+
+        socket.on('reconnect', () => {
+            adicionarLog("<span style='color: #00ff66;'>➔ Reconectado ao servidor.</span>");
+        });
+
+        socket.on('stats', (dados) => {
+            document.getElementById("bot-nome").innerText = dados.nomeBot || "Sorasaki Core";
+            document.getElementById("versao").innerText = dados.versao || "4.00";
+            document.getElementById("criador").innerText = dados.criador || "IVAD ⁷⁷⁷";
+            document.getElementById("comandos").innerText = dados.comandosCarregados ?? "0";
+
+            if (dados.status === "online") {
+                statusEl.innerText = "ONLINE";
+                statusEl.className = "valor status-online";
+                cardStatus.classList.add("online-border");
+                document.getElementById("uptime").innerText = formatarUptime(dados.uptime);
+
+                const cpu = Number.isFinite(dados.cpu) ? Math.max(0, Math.min(100, Math.round(dados.cpu))) : 0;
+                document.getElementById("cpu-texto").innerText = `${cpu}%`;
+                document.getElementById("cpu-barra").style.width = `${cpu}%`;
+
+                const ramUsada = Number.isFinite(dados.ramUsadaGB) ? dados.ramUsadaGB : 0;
+                const ramTotal = (Number.isFinite(dados.ramTotalGB) && dados.ramTotalGB > 0) ? dados.ramTotalGB : 1;
+                const ramPorcentagem = Math.max(0, Math.min(100, Math.round((ramUsada / ramTotal) * 100)));
+                document.getElementById("ram-texto").innerText = `${ramUsada.toFixed(2)} GB / ${ramTotal.toFixed(1)} GB`;
                 document.getElementById("ram-barra").style.width = `${ramPorcentagem}%`;
+
+                if (estadoAnterior !== "online") {
+                    adicionarLog("<span style='color: #00ff66;'>➔ Instância conectada ao WhatsApp.</span>");
+                    estadoAnterior = "online";
+                }
             } else {
-                document.getElementById("cpu-texto").innerText = `0%`;
-                document.getElementById("cpu-barra").style.width = `0%`;
-                document.getElementById("ram-texto").innerText = `0.0 GB`;
-                document.getElementById("ram-barra").style.width = `0%`;
-            }
-        }
-
-        let ultimoEstado = "offline";
-
-        async function atualizarDados() {
-            try {
-                const resposta = await fetch(URL_API);
-                if (!resposta.ok) throw new Error();
-                const dados = await resposta.json();
-
-                document.getElementById("bot-nome").innerText = dados.nomeBot || "Sorasaki Core";
-                document.getElementById("versao").innerText = dados.versao || "4.00";
-                document.getElementById("criador").innerText = dados.criador || "IVAD ⁷⁷⁷";
-                document.getElementById("comandos").innerText = dados.comandosCarregados ?? "0";
-                
-                const statusEl = document.getElementById("status");
-                const cardStatus = document.getElementById("card-status");
-                
-                if (dados.status === "online") {
-                    statusEl.innerText = "ONLINE";
-                    statusEl.className = "valor status-online";
-                    cardStatus.classList.add("online-border");
-                    document.getElementById("uptime").innerText = formatarUptime(dados.uptime);
-                    
-                    if (ultimoEstado !== "online") {
-                        adicionarLog("<span style='color: #00ff66;'>➔ Handshake HTTPS Estabelecido! Sincronização rodando em tempo real.</span>");
-                        ultimoEstado = "online";
-                    }
-                } else {
-                    statusEl.innerText = "OFFLINE";
-                    statusEl.className = "valor status-offline";
-                    cardStatus.classList.remove("online-border");
-                    document.getElementById("uptime").innerText = "00d 00h 00m 00s";
-                    
-                    if (ultimoEstado !== "offline") {
-                        adicionarLog("<span style='color: #ff007f;'>✖ Conexão ativa, mas a instância Baileys está desconectada do WhatsApp.</span>");
-                        ultimoEstado = "offline";
-                    }
-                }
-
-            } catch (erro) {
-                const statusEl = document.getElementById("status");
-                statusEl.innerText = "DISCONNECTED";
-                statusEl.className = "valor status-offline";
-                document.getElementById("card-status").classList.remove("online-border");
-                document.getElementById("uptime").innerText = "--d --h --m --s";
-                document.getElementById("comandos").innerText = "--";
-                document.getElementById("criador").innerText = "Inacessível";
-                
-                if (ultimoEstado !== "erro") {
-                    adicionarLog("<span style='color: #ff007f;'>⚠ Endpoint Inacessível: Verifique se o Node está ligado ou libere a página de bypass azul do Ngrok.</span>");
-                    ultimoEstado = "erro";
+                definirOffline();
+                if (estadoAnterior !== "offline") {
+                    adicionarLog("<span style='color: #ff9800;'>⚠ Servidor ativo, mas a instância Baileys está desconectada do WhatsApp.</span>");
+                    estadoAnterior = "offline";
                 }
             }
-        }
-
-        setInterval(atualizarDados, 2000);
-        setInterval(simularHardware, 2500);
-        atualizarDados();
+        });
     </script>
 </body>
 </html>
